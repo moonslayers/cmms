@@ -90,6 +90,8 @@ Read the rule file before doing the related work:
 - **`customization.md`** - theming via the `hlm-tailwind-preset.css`, CSS variables, the `ui-theme`
   generator, and extending copied Helm components.
 - **`mcp.md`** - using the `@spartan-ng/mcp` tools, resources, and prompts for discovery.
+- **`rules/known-issues.md`** - Brain/Helm quirks and limitations that cannot be fixed by editing
+  Helm code (e.g. BrnTooltip `TemplateRef` context dropped, overlay config requirements).
 
 ## Key patterns
 

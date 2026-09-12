@@ -4,7 +4,8 @@ description: >-
   Using the Mantia shared presentational component library. Trigger when creating
   or editing feature pages, composing dashboards, building tables with
   DataTable, using StatCard/PageHeader/StatusBadge/charts, or following the
-  PageHeader → KPIs → filters → table page pattern.
+  PageHeader → KPIs → filters → table page pattern. Also trigger on:
+  valueFormat, tooltip de chart, chart palette, donut, line chart, bar chart.
 ---
 
 # Mantia Shared UI Components
@@ -35,11 +36,15 @@ All components are **standalone** with **OnPush** change detection. Use semantic
 
 ### Charts (custom inline SVG — no charting library)
 
-- **BarChartComponent**: `data` (`{ label: string; value: number }[]`, required), `height?` (default 220), `ariaLabel?`
-- **LineChartComponent**: `data` (`{ label: string; value: number }[]`, required), `height?` (default 220), `ariaLabel?`
-- **DonutChartComponent**: `data` (`{ label: string; value: number; color?: string }[]`, required), `size?` (default 180), `ariaLabel?`
+**Shared layer** at `shared/components/charts/` — utilities (`formatChartValue`, `resolveChartPalette`, `prefersReducedMotion`), types (`ChartValueFormat`, `DonutDataPoint`), and `ChartTooltipContentComponent`. All three charts use `HlmTooltip` + `ChartTooltipContentComponent` for tooltips.
 
-DonutChart auto-assigns colors from CSS custom properties (`--primary`, `--chart-1`..`--chart-5`) when `color` is omitted.
+- **BarChartComponent**: `data` (`ChartDataPoint[]` — `{ label: string; value: number }`, required), `height?` (default 220), `ariaLabel?`, `valueFormat?` (`'number'|'currency'|'percent'|'compact'`, default `'number'`), `showValues?` (default false), `animate?` (default true)
+- **LineChartComponent**: `data` (`LineChartDataPoint[]` — `{ label: string; value: number }`, required), `height?` (default 220), `ariaLabel?`, `valueFormat?` (`'number'|'currency'|'percent'|'compact'`, default `'number'`), `showValues?` (default true), `animate?` (default true)
+- **DonutChartComponent**: `data` (`DonutDataPoint[]` — `{ label: string; value: number; color?: string }`, required), `size?` (default 180), `ariaLabel?`, `valueFormat?` (`'number'|'currency'|'percent'|'compact'`, default `'number'`), `showTotal?` (default true), `animate?` (default true)
+
+Donut colors: `resolveChartPalette()` reads `--chart-1`..`--chart-5` (falls back to `--primary`). Per-point `color` overrides the palette entry.
+
+> Para detalle del sistema de charts (utilidades, tooltip, quirk de BrnTooltip, reduced-motion, gotchas), cargar el skill `mantia-charts`.
 
 ### DataTableComponent
 `columns` (required `TableColumn[]`), `rows` (`Record<string, unknown>[]`), `pageSize?` (default 8), `searchable?` (default true), `searchPlaceholder?` (default `'Buscar...'`).
