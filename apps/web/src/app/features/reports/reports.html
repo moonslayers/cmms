@@ -68,21 +68,21 @@
 
 <div class="mt-6 grid gap-6 lg:grid-cols-2">
   <app-section-card title="Tendencia de OT" description="Órdenes creadas vs cerradas por mes">
-    <app-line-chart body [data]="tendenciaData()" [height]="240" ariaLabel="Tendencia de órdenes de trabajo por mes" />
+    <app-line-chart body [data]="tendenciaData()" [height]="240" [showValues]="false" ariaLabel="Tendencia de órdenes de trabajo por mes" />
   </app-section-card>
 
   <app-section-card title="Costo de mantenimiento" description="Costo estimado mensual">
-    <app-bar-chart body [data]="costoPorMesData()" [height]="240" ariaLabel="Costo de mantenimiento por mes" />
+    <app-bar-chart body [data]="costoPorMesData()" [height]="240" valueFormat="currency" ariaLabel="Costo de mantenimiento por mes" />
   </app-section-card>
 
   <app-section-card title="OT por tipo" description="Distribución de órdenes por categoría">
     <div body class="flex justify-center">
-      <app-donut-chart [data]="otPorTipoData()" [size]="200" ariaLabel="Distribución de OT por tipo" />
+      <app-donut-chart [data]="otPorTipoData()" [size]="200" valueFormat="number" ariaLabel="Distribución de OT por tipo" />
     </div>
   </app-section-card>
 
   <app-section-card title="OT por técnico" description="Top 5 técnicos con más órdenes asignadas">
-    <app-bar-chart body [data]="otPorTecnicoData()" [height]="240" ariaLabel="Órdenes por técnico" />
+    <app-bar-chart body [data]="otPorTecnicoData()" [height]="240" valueFormat="number" ariaLabel="Órdenes por técnico" />
   </app-section-card>
 </div>
 

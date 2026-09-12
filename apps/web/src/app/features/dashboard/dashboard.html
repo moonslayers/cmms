@@ -52,6 +52,7 @@
       <app-line-chart
         [data]="data.tendenciaMensual"
         [height]="220"
+        [showValues]="false"
         ariaLabel="Tendencia mensual de órdenes de trabajo"
       />
     </div>
@@ -62,6 +63,7 @@
       <app-bar-chart
         [data]="data.costoPorMes"
         [height]="220"
+        valueFormat="currency"
         ariaLabel="Costo mensual de mantenimiento"
       />
     </div>
