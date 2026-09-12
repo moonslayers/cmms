@@ -1,64 +1,137 @@
-<svg
-  [attr.viewBox]="'0 0 500 ' + height()"
-  [attr.aria-label]="ariaLabel() || 'Gráfico de líneas'"
-  role="img"
-  class="h-auto w-full"
-  preserveAspectRatio="xMidYMid meet"
->
-  <defs>
-    <linearGradient [attr.id]="gradientId" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3" />
-      <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
-    </linearGradient>
-  </defs>
+@if (empty()) {
+  <div
+    class="flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/30"
+    [style.height.px]="height()"
+  >
+    <span class="text-sm text-muted-foreground">Sin datos</span>
+  </div>
+} @else {
+  <svg
+    [attr.viewBox]="'0 0 ' + svgWidth + ' ' + height()"
+    [attr.aria-label]="ariaLabel() || 'Gráfico de líneas'"
+    role="img"
+    class="h-auto w-full"
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <title>{{ ariaLabel() || 'Gráfico de líneas' }}</title>
+    <desc>Gráfico de líneas que muestra tendencia de datos</desc>
 
-  @for (val of gridLines(); track val) {
-    <line
-      [attr.x1]="40"
-      [attr.y1]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue())"
-      [attr.x2]="484"
-      [attr.y2]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue())"
-      class="stroke-border"
-      stroke-width="0.5"
+    <defs>
+      <linearGradient [attr.id]="gradientId" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3" />
+        <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
+      </linearGradient>
+    </defs>
+
+    <!-- Grid lines -->
+    @for (val of gridLines(); track val) {
+      <line
+        [attr.x1]="padding.left"
+        [attr.y1]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue())"
+        [attr.x2]="svgWidth - padding.right"
+        [attr.y2]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue())"
+        class="stroke-border"
+        stroke-width="0.5"
+      />
+      <text
+        [attr.x]="padding.left - 8"
+        [attr.y]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue()) + 3"
+        text-anchor="end"
+        class="fill-muted-foreground text-[9px]"
+      >{{ formatValue(val, valueFormat()) }}</text>
+    }
+
+    <!-- Area fill -->
+    @if (areaD(); as ad) {
+      <path [attr.d]="ad" [attr.fill]="'url(#' + gradientId + ')'" />
+    }
+
+    <!-- Line with draw animation -->
+    @if (pathD(); as pd) {
+      <path
+        #pathRef
+        [attr.d]="pd"
+        fill="none"
+        stroke="var(--primary)"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        [attr.stroke-dasharray]="dashStyle().dasharray"
+        [attr.stroke-dashoffset]="dashStyle().dashoffset"
+        class="line-path-transition transition-[stroke-dashoffset] duration-700 ease-out"
+      />
+    }
+
+    <!-- Vertical guide line -->
+    @if (activePoint(); as ap) {
+      <line
+        [attr.x1]="ap.x"
+        [attr.y1]="padding.top"
+        [attr.x2]="ap.x"
+        [attr.y2]="padding.top + (height() - padding.top - padding.bottom)"
+        class="stroke-muted-foreground/30"
+        stroke-width="1"
+        stroke-dasharray="3 3"
+      />
+    }
+
+    <!-- Data points -->
+    @for (pt of formattedPoints(); track pt.label; let i = $index) {
+      <circle
+        [attr.cx]="pt.x"
+        [attr.cy]="pt.y"
+        [attr.r]="activeIndex() === i ? 5 : 3"
+        class="point-transition fill-primary cursor-pointer transition-all duration-150"
+        [class.ring-2]="activeIndex() === i"
+        [class.ring-primary]="activeIndex() === i"
+        [class.ring-offset-2]="activeIndex() === i"
+        [class.fill-primary]="activeIndex() !== i"
+        [class.stroke-background]="activeIndex() === i"
+        [class.stroke-2]="activeIndex() === i"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="pt.label + ': ' + pt.formattedValue"
+        (mouseenter)="onPointEnter(i)"
+        (mouseleave)="onPointLeave()"
+        (focus)="onPointFocus(i)"
+        (blur)="onPointBlur()"
+        [hlmTooltip]="pointTooltip"
+        [position]="'top'"
+        [showDelay]="100"
+        [hideDelay]="0"
+      />
+    }
+
+    <!-- Value labels -->
+    @if (showValues()) {
+      @for (pt of formattedPoints(); track pt.label) {
+        <text
+          [attr.x]="pt.x"
+          [attr.y]="pt.y - 10"
+          text-anchor="middle"
+          class="fill-foreground text-[9px] font-medium"
+        >{{ pt.formattedValue }}</text>
+      }
+    }
+
+    <!-- X-axis labels -->
+    @for (lp of labelPositions(); track lp.label) {
+      <text
+        [attr.x]="lp.x"
+        [attr.y]="height() - 6"
+        text-anchor="middle"
+        class="fill-muted-foreground text-[9px]"
+      >{{ lp.label }}</text>
+    }
+  </svg>
+}
+
+<ng-template #pointTooltip>
+  @if (activeTooltipData(); as data) {
+    <app-chart-tooltip-content
+      [label]="data.label"
+      [value]="data.formattedValue"
+      [color]="data.color"
     />
-    <text
-      [attr.x]="36"
-      [attr.y]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue()) + 3"
-      text-anchor="end"
-      class="fill-muted-foreground text-[9px]"
-    >{{ val }}</text>
   }
-
-  @if (areaD(); as ad) {
-    <path [attr.d]="ad" [attr.fill]="'url(#' + gradientId + ')'" />
-  }
-  @if (pathD(); as pd) {
-    <path
-      [attr.d]="pd"
-      fill="none"
-      stroke="var(--primary)"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  }
-
-  @for (pt of points(); track pt.label) {
-    <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3" class="fill-primary" />
-    <text
-      [attr.x]="pt.x"
-      [attr.y]="pt.y - 8"
-      text-anchor="middle"
-      class="fill-foreground text-[9px] font-medium"
-    >{{ pt.value }}</text>
-  }
-
-  @for (lp of labelPositions(); track lp.label) {
-    <text
-      [attr.x]="lp.x"
-      [attr.y]="height() - 6"
-      text-anchor="middle"
-      class="fill-muted-foreground text-[9px]"
-    >{{ lp.label }}</text>
-  }
-</svg>
+</ng-template>

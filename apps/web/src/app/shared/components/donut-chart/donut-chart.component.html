@@ -1,31 +1,102 @@
+@let s = size();
+@let half = s / 2;
+@let radius = half - 10;
+@let sw = 16;
+@let empty = data().length === 0;
+
 <div class="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-  <svg
-    [attr.width]="size()"
-    [attr.height]="size()"
-    [attr.viewBox]="'0 0 ' + size() + ' ' + size()"
-    [attr.aria-label]="ariaLabel() || 'Gráfico de dona'"
-    role="img"
-    class="shrink-0"
-  >
-    @for (seg of segments(); track seg.label) {
-      <path
-        [attr.d]="describeArc(size() / 2, size() / 2, size() / 2 - 10, seg.startAngle, seg.endAngle)"
-        fill="none"
-        [attr.stroke]="seg.color"
-        stroke-width="16"
-        stroke-linecap="round"
-      />
-    }
-  </svg>
+  <div class="relative shrink-0 w-full max-w-[size(--chart-max,s)]">
+    <svg
+      [attr.viewBox]="'0 0 ' + s + ' ' + s"
+      [attr.aria-label]="ariaLabel() || 'Gráfico de dona'"
+      role="img"
+      class="block h-auto w-full"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <title>{{ ariaLabel() || 'Gráfico de dona' }}</title>
+      <desc>Donut chart — {{ segments().length }} segmentos, total {{ formattedTotal() }}</desc>
+
+      @if (empty) {
+        <circle
+          [attr.cx]="half"
+          [attr.cy]="half"
+          [attr.r]="radius"
+          fill="none"
+          class="stroke-border"
+          [attr.stroke-width]="sw"
+        />
+        <text
+          [attr.x]="half"
+          [attr.y]="half"
+          text-anchor="middle"
+          dominant-baseline="central"
+          class="fill-muted-foreground text-xs"
+        >Sin datos</text>
+      } @else {
+        @for (seg of segments(); track seg.label; let i = $index) {
+          <path
+            [attr.d]="describeArc(half, half, radius, seg.startAngle, seg.endAngle)"
+            fill="none"
+            [attr.stroke]="seg.color"
+            [attr.stroke-width]="activeIndex() === i ? sw + 4 : sw"
+            stroke-linecap="round"
+            [attr.opacity]="activeIndex() !== null && activeIndex() !== i ? 0.4 : 1"
+            [style.transition]="'stroke-width 0.2s ease, opacity 0.2s ease'"
+            tabindex="0"
+            [attr.role]="'button'"
+            [attr.aria-label]="seg.label + ': ' + seg.formattedValue"
+            (mouseenter)="onEnter(i)"
+            (mouseleave)="onLeave()"
+            (focus)="onEnter(i)"
+            (blur)="onLeave()"
+            [hlmTooltip]="segTooltip"
+            position="top"
+            [showDelay]="100"
+            [hideDelay]="0"
+            class="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            [class.donut-segment-animate]="animate() && !reducedMotion()"
+            [style.--donut-delay]="(i * 80) + 'ms'"
+          />
+        }
+
+        @if (showTotal()) {
+          <text
+            [attr.x]="half"
+            [attr.y]="half - 4"
+            text-anchor="middle"
+            dominant-baseline="central"
+            class="fill-foreground text-lg font-semibold"
+          >{{ formattedTotal() }}</text>
+          <text
+            [attr.x]="half"
+            [attr.y]="half + 14"
+            text-anchor="middle"
+            dominant-baseline="central"
+            class="fill-muted-foreground text-[10px]"
+          >Total</text>
+        }
+      }
+    </svg>
+  </div>
 
   <div class="flex flex-col gap-1.5">
     @for (item of legendItems(); track item.label) {
       <div class="flex items-center gap-2 text-sm">
         <span class="size-2.5 shrink-0 rounded-full" [style.background]="item.color"></span>
         <span class="text-foreground">{{ item.label }}</span>
-        <span class="text-muted-foreground ml-auto tabular-nums">{{ item.value }}</span>
+        <span class="text-muted-foreground ml-auto tabular-nums">{{ item.formattedValue }}</span>
         <span class="text-muted-foreground w-10 text-right tabular-nums">{{ item.percentage }}%</span>
       </div>
     }
   </div>
 </div>
+
+<ng-template #segTooltip>
+  @if (activeTooltipData(); as data) {
+    <app-chart-tooltip-content
+      [label]="data.label"
+      [value]="data.formattedValue"
+      [color]="data.color"
+    />
+  }
+</ng-template>

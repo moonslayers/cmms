@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { afterNextRender } from '@angular/core';
+import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
+import { provideBrnTooltipGroup } from '@spartan-ng/brain/tooltip';
+import { ChartTooltipContentComponent } from '../charts/chart-tooltip';
+import { formatChartValue, prefersReducedMotion } from '../charts';
+import type { ChartValueFormat } from '../charts';
 
 export interface LineChartDataPoint {
   label: string;
@@ -11,22 +25,67 @@ let nextId = 0;
   selector: 'app-line-chart',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block w-full' },
+  providers: [provideBrnTooltipGroup({ skipDelayDuration: 300 })],
+  imports: [HlmTooltipImports, ChartTooltipContentComponent],
   templateUrl: './line-chart.component.html',
+  styles: [
+    `
+      @media (prefers-reduced-motion: reduce) {
+        .line-path-transition {
+          transition: none !important;
+        }
+        .point-transition {
+          transition: none !important;
+        }
+      }
+    `,
+  ],
 })
 export class LineChartComponent {
-  protected readonly gradientId = `line-area-fill-${nextId++}`;
-  data = input.required<LineChartDataPoint[]>();
-  height = input<number>(220);
-  ariaLabel = input<string>();
+  readonly gradientId = `line-area-fill-${nextId++}`;
+  readonly uniqueId = `line-chart-${nextId}`;
+
+  readonly pathRef = viewChild<ElementRef<SVGPathElement>>('pathRef');
+
+  protected readonly formatValue = formatChartValue;
+
+  readonly data = input.required<LineChartDataPoint[]>();
+  readonly height = input<number>(220);
+  readonly ariaLabel = input<string>();
+  readonly valueFormat = input<ChartValueFormat>('number');
+  readonly showValues = input<boolean>(true);
+  readonly animate = input<boolean>(true);
 
   protected readonly padding = { top: 20, right: 16, bottom: 30, left: 40 };
+  protected readonly svgWidth = 500;
 
-  maxValue = computed(() => {
+  readonly activeIndex = signal<number | null>(null);
+  readonly pathLen = signal(0);
+  readonly animated = signal(false);
+
+  readonly reducedMotion = computed(() => prefersReducedMotion());
+
+  constructor() {
+    afterNextRender(() => {
+      const el = this.pathRef()?.nativeElement;
+      if (el && typeof el.getTotalLength === 'function') {
+        requestAnimationFrame(() => {
+          const len = el.getTotalLength();
+          this.pathLen.set(len);
+          if (!this.reducedMotion() && this.animate()) {
+            this.animated.set(true);
+          }
+        });
+      }
+    });
+  }
+
+  readonly maxValue = computed(() => {
     const vals = this.data().map((d) => d.value);
     return Math.max(...vals, 1);
   });
 
-  gridLines = computed(() => {
+  readonly gridLines = computed(() => {
     const max = this.maxValue();
     const steps = 4;
     const lines: number[] = [];
@@ -36,57 +95,13 @@ export class LineChartComponent {
     return lines;
   });
 
-  pathD = computed(() => {
-    const pts = this.data();
-    if (pts.length === 0) return '';
-    const max = this.maxValue();
-    const h = this.height();
-    const p = this.padding;
-    const plotW = 500 - p.left - p.right;
-    const plotH = h - p.top - p.bottom;
-    const stepX = pts.length > 1 ? plotW / (pts.length - 1) : plotW / 2;
-
-    return pts
-      .map((pt, i) => {
-        const x = p.left + (pts.length > 1 ? i * stepX : plotW / 2);
-        const y = p.top + plotH - (pt.value / max) * plotH;
-        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-      })
-      .join(' ');
-  });
-
-  areaD = computed(() => {
-    const pts = this.data();
-    if (pts.length === 0) return '';
-    const max = this.maxValue();
-    const h = this.height();
-    const p = this.padding;
-    const plotW = 500 - p.left - p.right;
-    const plotH = h - p.top - p.bottom;
-    const stepX = pts.length > 1 ? plotW / (pts.length - 1) : plotW / 2;
-
-    const line = pts
-      .map((pt, i) => {
-        const x = p.left + (pts.length > 1 ? i * stepX : plotW / 2);
-        const y = p.top + plotH - (pt.value / max) * plotH;
-        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-      })
-      .join(' ');
-
-    const lastX = p.left + (pts.length > 1 ? (pts.length - 1) * stepX : plotW / 2);
-    const firstX = p.left + (pts.length > 1 ? 0 : plotW / 2);
-    const bottom = p.top + plotH;
-
-    return `${line} L ${lastX} ${bottom} L ${firstX} ${bottom} Z`;
-  });
-
-  points = computed(() => {
+  readonly formattedPoints = computed(() => {
     const pts = this.data();
     if (pts.length === 0) return [];
     const max = this.maxValue();
     const h = this.height();
     const p = this.padding;
-    const plotW = 500 - p.left - p.right;
+    const plotW = this.svgWidth - p.left - p.right;
     const plotH = h - p.top - p.bottom;
     const stepX = pts.length > 1 ? plotW / (pts.length - 1) : plotW / 2;
 
@@ -95,14 +110,15 @@ export class LineChartComponent {
       y: p.top + plotH - (pt.value / max) * plotH,
       label: pt.label,
       value: pt.value,
+      formattedValue: formatChartValue(pt.value, this.valueFormat()),
     }));
   });
 
-  labelPositions = computed(() => {
+  readonly labelPositions = computed(() => {
     const pts = this.data();
     if (pts.length === 0) return [];
     const p = this.padding;
-    const plotW = 500 - p.left - p.right;
+    const plotW = this.svgWidth - p.left - p.right;
     const stepX = pts.length > 1 ? plotW / (pts.length - 1) : plotW / 2;
 
     return pts.map((pt, i) => ({
@@ -110,4 +126,61 @@ export class LineChartComponent {
       label: pt.label,
     }));
   });
+
+  readonly pathD = computed(() => {
+    const pts = this.formattedPoints();
+    if (pts.length === 0) return '';
+    return pts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`).join(' ');
+  });
+
+  readonly areaD = computed(() => {
+    const pts = this.formattedPoints();
+    if (pts.length === 0) return '';
+    const line = pts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`).join(' ');
+    const lastX = pts[pts.length - 1].x;
+    const firstX = pts[0].x;
+    const bottom = this.padding.top + (this.height() - this.padding.top - this.padding.bottom);
+    return `${line} L ${lastX} ${bottom} L ${firstX} ${bottom} Z`;
+  });
+
+  readonly activePoint = computed(() => {
+    const idx = this.activeIndex();
+    const pts = this.formattedPoints();
+    if (idx === null || idx < 0 || idx >= pts.length) return null;
+    return pts[idx];
+  });
+
+  readonly activeTooltipData = computed(() => {
+    const pt = this.activePoint();
+    if (!pt) return null;
+    return { label: pt.label, formattedValue: pt.formattedValue, color: 'var(--primary)' };
+  });
+
+  readonly dashStyle = computed(() => {
+    if (!this.animated()) return { dasharray: 'none', dashoffset: '0' };
+    const len = this.pathLen();
+    if (!len) return { dasharray: 'none', dashoffset: '0' };
+    return {
+      dasharray: `${len} ${len}`,
+      dashoffset: '0',
+    };
+  });
+
+  readonly empty = computed(() => this.data().length === 0);
+
+  onPointEnter(index: number): void {
+    this.activeIndex.set(index);
+  }
+
+  onPointLeave(): void {
+    this.activeIndex.set(null);
+  }
+
+  onPointFocus(index: number): void {
+    this.activeIndex.set(index);
+  }
+
+  onPointBlur(): void {
+    this.activeIndex.set(null);
+  }
 }

@@ -1,31 +1,94 @@
-<svg
-  [attr.viewBox]="'0 0 ' + (bars().length * 50) + ' ' + height()"
-  [attr.aria-label]="ariaLabel() || 'Gráfico de barras'"
-  role="img"
-  class="h-auto w-full"
-  preserveAspectRatio="xMidYMid meet"
->
-  @for (bar of bars(); track bar.label; let i = $index) {
-    <rect
-      [attr.x]="i * 50 + 8"
-      [attr.y]="height() - (bar.heightPercent / 100) * (height() - 30)"
-      [attr.width]="34"
-      [attr.height]="(bar.heightPercent / 100) * (height() - 30)"
-      rx="4"
-      class="fill-primary"
-      opacity="0.85"
+@if (isEmpty()) {
+  <div
+    class="flex items-center justify-center rounded-md border border-dashed border-border bg-muted/20 text-sm text-muted-foreground"
+    [style.height.px]="height()"
+  >
+    Sin datos para mostrar
+  </div>
+} @else {
+  <svg
+    [attr.viewBox]="'0 0 ' + chartWidth() + ' ' + height()"
+    [attr.aria-label]="chartTitle()"
+    role="img"
+    class="h-auto w-full"
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <title>{{ chartTitle() }}</title>
+    <desc>Gráfico de barras que muestra valores numéricos por categoría</desc>
+
+    @for (line of gridlines(); track line.y) {
+      <line
+        [attr.x1]="0"
+        [attr.y1]="line.y"
+        [attr.x2]="chartWidth()"
+        [attr.y2]="line.y"
+        class="stroke-border"
+        stroke-width="0.5"
+        stroke-dasharray="4,3"
+      />
+    }
+
+    <line
+      [attr.x1]="0"
+      [attr.y1]="height() - 30"
+      [attr.x2]="chartWidth()"
+      [attr.y2]="height() - 30"
+      class="stroke-border"
+      stroke-width="1"
     />
-    <text
-      [attr.x]="i * 50 + 25"
-      [attr.y]="height() - (bar.heightPercent / 100) * (height() - 30) - 6"
-      text-anchor="middle"
-      class="fill-foreground text-[10px] font-medium"
-    >{{ bar.value }}</text>
-    <text
-      [attr.x]="i * 50 + 25"
-      [attr.y]="height() - 4"
-      text-anchor="middle"
-      class="fill-muted-foreground text-[9px]"
-    >{{ bar.label }}</text>
+
+    @for (bar of barData(); track bar.label; let i = $index) {
+      <rect
+        [hlmTooltip]="pointTooltip"
+        position="top"
+        [showDelay]="100"
+        [hideDelay]="0"
+        [attr.x]="bar.x"
+        [attr.y]="bar.y"
+        [attr.width]="bar.barW"
+        [attr.height]="bar.barH"
+        rx="3"
+        class="fill-primary cursor-pointer transition-opacity duration-150 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        [class.bar-grow]="animate() && !reducedMotion()"
+        [style.transform-origin]="bar.transformOrigin"
+        tabindex="0"
+        role="graphics-symbol"
+        [attr.aria-label]="bar.label + ': ' + bar.formattedValue"
+        (mouseenter)="onBarEnter(i)"
+        (mouseleave)="onBarLeave()"
+        (focus)="onBarFocus(i)"
+        (blur)="onBarBlur()"
+      />
+
+      @if (showValues()) {
+        <text
+          [attr.x]="bar.labelX"
+          [attr.y]="bar.y - 6"
+          text-anchor="middle"
+          class="pointer-events-none fill-foreground text-[10px] font-medium select-none"
+          aria-hidden="true"
+        >{{ bar.formattedValue }}</text>
+      }
+
+      <text
+        [attr.x]="bar.labelX"
+        [attr.y]="height() - 10"
+        text-anchor="middle"
+        class="fill-muted-foreground text-[9px]"
+        [attr.transform]="bar.labelTransform"
+        [style.text-anchor]="bar.textAnchor"
+        aria-hidden="true"
+      >{{ bar.label }}</text>
+    }
+  </svg>
+}
+
+<ng-template #pointTooltip>
+  @if (activeTooltipData(); as data) {
+    <app-chart-tooltip-content
+      [label]="data.label"
+      [value]="data.formattedValue"
+      [color]="data.color"
+    />
   }
-</svg>
+</ng-template>
