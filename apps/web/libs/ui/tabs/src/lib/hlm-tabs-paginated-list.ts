@@ -48,6 +48,7 @@ import { listVariants } from './hlm-tabs-list';
 
     <div
       #tabListContainer
+      tabindex="0"
       class="z-[1] flex grow overflow-hidden"
       (keydown)="_handleKeydown($event)"
     >
@@ -87,7 +88,7 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 
   public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
   /** Explicitly annotating type to avoid non-portable inferred type */
-  public readonly itemsChanges: Observable<ReadonlyArray<BrnPaginatedTabHeaderItem>> = toObservable(
+  public readonly itemsChanges: Observable<readonly BrnPaginatedTabHeaderItem[]> = toObservable(
     this.items,
   );
 
