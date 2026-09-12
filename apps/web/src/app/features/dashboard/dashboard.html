@@ -1,0 +1,134 @@
+<app-page-header
+  title="Panel de control"
+  [subtitle]="'Resumen del período: ' + currentPeriod()"
+>
+  <button actions hlmBtn variant="outline" size="sm">
+    <ng-icon name="lucideDownload" class="mr-1.5" />
+    Exportar
+  </button>
+</app-page-header>
+
+<div class="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+  <app-stat-card
+    label="Órdenes abiertas"
+    [value]="data.kpis.otAbiertas.value"
+    [hint]="data.kpis.otAbiertas.unit"
+    trend="down"
+    delta="12%"
+    icon="lucideClipboardList"
+  />
+  <app-stat-card
+    label="Cumplimiento preventivo"
+    [value]="data.kpis.cumplimientoPreventivo.value + '%'"
+    trend="up"
+    delta="5%"
+    icon="lucideShieldCheck"
+  />
+  <app-stat-card
+    label="Disponibilidad activos"
+    [value]="data.kpis.disponibilidadActivos.value + '%'"
+    trend="up"
+    delta="3%"
+    icon="lucideGauge"
+  />
+  <app-stat-card
+    label="Repuestos bajo stock"
+    [value]="data.kpis.repuestosBajoStock.value"
+    trend="up"
+    delta="2"
+    icon="lucideTriangleAlert"
+  />
+</div>
+
+<div class="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-3">
+  <app-section-card title="Órdenes por estado">
+    <div body class="flex justify-center">
+      <app-donut-chart [data]="data.otPorEstado" [size]="200" ariaLabel="Órdenes de trabajo por estado" />
+    </div>
+  </app-section-card>
+
+  <app-section-card title="Tendencia mensual">
+    <div body>
+      <app-line-chart
+        [data]="data.tendenciaMensual"
+        [height]="220"
+        ariaLabel="Tendencia mensual de órdenes de trabajo"
+      />
+    </div>
+  </app-section-card>
+
+  <app-section-card title="Costo mensual">
+    <div body>
+      <app-bar-chart
+        [data]="data.costoPorMes"
+        [height]="220"
+        ariaLabel="Costo mensual de mantenimiento"
+      />
+    </div>
+  </app-section-card>
+</div>
+
+<div class="mt-6">
+  <app-section-card title="Órdenes recientes">
+    <div body>
+      <app-data-table
+        [columns]="otColumns"
+        [rows]="otRows()"
+        [pageSize]="5"
+        [searchable]="true"
+        searchPlaceholder="Buscar orden..."
+      />
+    </div>
+  </app-section-card>
+</div>
+
+<div class="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-2">
+  <app-section-card title="Próximos mantenimientos">
+    <div body>
+      @if (upcomingRows().length === 0) {
+        <p class="text-muted-foreground py-8 text-center text-sm">No hay mantenimientos programados.</p>
+      } @else {
+        <div class="space-y-3">
+          @for (plan of upcomingRows(); track plan.nombre) {
+            <div class="flex items-center justify-between rounded-lg border border-border p-3">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-sm font-medium text-foreground">{{ plan.nombre }}</span>
+                <span class="text-muted-foreground text-xs">
+                  {{ plan.activo }} · {{ plan.tecnico }}
+                </span>
+              </div>
+              <span class="text-muted-foreground text-xs tabular-nums">{{ plan.proximaFecha }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </app-section-card>
+
+  <app-section-card title="Repuestos bajo stock">
+    <div body>
+      @if (lowStockRows().length === 0) {
+        <p class="text-muted-foreground py-8 text-center text-sm">Todos los repuestos están con stock suficiente.</p>
+      } @else {
+        <div class="space-y-3">
+          @for (part of lowStockRows(); track part.sku) {
+            <div class="flex items-center justify-between rounded-lg border border-border bg-destructive/5 p-3">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-sm font-medium text-foreground">{{ part.nombre }}</span>
+                <span class="text-muted-foreground text-xs font-mono">{{ part.sku }}</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-destructive font-medium tabular-nums">
+                  {{ part.stockActual }}
+                </span>
+                <span class="text-muted-foreground">/</span>
+                <span class="text-muted-foreground tabular-nums">{{ part.stockMinimo }}</span>
+                <ng-icon name="lucideTriangleAlert" class="text-destructive text-[length:--spacing(3.5)]" />
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </app-section-card>
+</div>

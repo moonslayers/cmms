@@ -1,0 +1,25 @@
+@if (breadcrumbs(); as items) {
+  <nav aria-label="Migas de pan" class="flex items-center gap-1 text-sm text-muted-foreground">
+    @for (crumb of items; track crumb.label; let last = $last) {
+      @if (crumb.link && !last) {
+        <a [routerLink]="crumb.link" class="hover:text-foreground transition-colors">{{ crumb.label }}</a>
+      } @else {
+        <span [class.text-foreground]="last">{{ crumb.label }}</span>
+      }
+      @if (!last) {
+        <ng-icon name="lucideChevronRight" class="text-[length:--spacing(3)]" />
+      }
+    }
+  </nav>
+}
+<div class="flex items-start justify-between gap-4">
+  <div class="flex flex-col gap-1">
+    <h1 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{{ title() }}</h1>
+    @if (subtitle(); as sub) {
+      <p class="text-muted-foreground">{{ sub }}</p>
+    }
+  </div>
+  <div class="flex shrink-0 items-center gap-2">
+    <ng-content select="[actions]" />
+  </div>
+</div>

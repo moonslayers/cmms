@@ -1,0 +1,107 @@
+<app-page-header
+  title="Ubicaciones y sitios"
+  subtitle="Estructura jerárquica de plantas, áreas y ubicaciones"
+  [breadcrumbs]="[
+    { label: 'Inicio', link: '/app/dashboard' },
+    { label: 'Ubicaciones' }
+  ]"
+/>
+
+<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <app-stat-card
+    label="Total ubicaciones"
+    [value]="totalLocations()"
+    icon="lucideMapPin"
+  />
+  <app-stat-card
+    label="Activos asignados"
+    [value]="totalAssets()"
+    icon="lucideBoxes"
+  />
+  <app-stat-card
+    label="Plantas"
+    [value]="plantasCount()"
+    icon="lucideFactory"
+  />
+  <app-stat-card
+    label="Áreas"
+    [value]="areasCount()"
+    icon="lucideBuilding2"
+  />
+</div>
+
+<div class="mt-6">
+  <app-section-card title="Vista jerárquica" description="Estructura de planta → área → ubicación">
+    <div body>
+      @for (root of tree(); track root.location.id) {
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-3 py-2">
+            <ng-icon name="lucideFactory" class="text-primary size-5" />
+            <span class="text-foreground text-sm font-semibold">{{ root.location.nombre }}</span>
+            <span
+              hlmBadge
+              variant="outline"
+              class="text-xs"
+              [class]="tipoBadgeClass(root.location.tipo)"
+            >
+              {{ tipoLabel(root.location.tipo) }}
+            </span>
+            <span class="text-muted-foreground ml-auto text-xs">
+              {{ root.location.activosCount }} activos
+            </span>
+          </div>
+
+          @for (area of root.children; track area.location.id) {
+            <div class="ml-8 flex flex-col gap-2">
+              <div class="flex items-center gap-3 py-2">
+                <ng-icon name="lucideBuilding2" class="text-accent-foreground size-4" />
+                <span class="text-foreground text-sm font-medium">{{ area.location.nombre }}</span>
+                <span
+                  hlmBadge
+                  variant="outline"
+                  class="text-xs"
+                  [class]="tipoBadgeClass(area.location.tipo)"
+                >
+                  {{ tipoLabel(area.location.tipo) }}
+                </span>
+                <span class="text-muted-foreground ml-auto text-xs">
+                  {{ area.location.activosCount }} activos
+                </span>
+              </div>
+
+              @for (ubicacion of area.children; track ubicacion.location.id) {
+                <div class="ml-8 flex items-center gap-3 py-2">
+                  <ng-icon name="lucideMapPin" class="text-muted-foreground size-4" />
+                  <span class="text-foreground text-sm">{{ ubicacion.location.nombre }}</span>
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="text-xs"
+                    [class]="tipoBadgeClass(ubicacion.location.tipo)"
+                  >
+                    {{ tipoLabel(ubicacion.location.tipo) }}
+                  </span>
+                  <span class="text-muted-foreground ml-auto text-xs">
+                    {{ ubicacion.location.activosCount }} activos
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </app-section-card>
+</div>
+
+<div class="mt-6">
+  <app-section-card title="Tabla de ubicaciones" description="Vista plana con búsqueda de todas las ubicaciones">
+    <div body>
+      <app-data-table
+        [columns]="tableColumns"
+        [rows]="tableRows()"
+        searchPlaceholder="Buscar ubicación..."
+      />
+    </div>
+  </app-section-card>
+</div>

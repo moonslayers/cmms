@@ -1,0 +1,290 @@
+<app-page-header
+  title="Activos y equipos"
+  subtitle="Gestión de activos e inventario de maquinaria"
+  [breadcrumbs]="[
+    { label: 'Panel de control', link: '/app/dashboard' },
+    { label: 'Activos' }
+  ]"
+>
+  <button actions hlmBtn>
+    <ng-icon name="lucidePlus" class="mr-2 size-4" />
+    Nuevo activo
+  </button>
+</app-page-header>
+
+<!-- KPI Row -->
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <app-stat-card
+    label="Total activos"
+    [value]="totalAssets()"
+    icon="lucideBoxes"
+  />
+  <app-stat-card
+    label="Operativos"
+    [value]="operationalCount()"
+    trend="up"
+    delta="Activos en uso"
+    icon="lucideCircleCheck"
+  />
+  <app-stat-card
+    label="En mantenimiento"
+    [value]="maintenanceCount()"
+    trend="flat"
+    delta="Requieren atención"
+    icon="lucideWrench"
+  />
+  <app-stat-card
+    label="Fuera de servicio"
+    [value]="outOfServiceCount()"
+    trend="down"
+    delta="Sin disponibilidad"
+    icon="lucideCircleAlert"
+  />
+</div>
+
+<!-- Toolbar -->
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <app-search-input
+    [(value)]="searchQuery"
+    placeholder="Buscar activo por nombre o tag..."
+  />
+
+  <div class="flex items-center gap-3">
+    <select
+      [value]="categoryFilter()"
+      (change)="onCategoryChange($event)"
+      aria-label="Filtrar por categoría"
+      class="border-input bg-background text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-auto rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <option value="todos">Todas las categorías</option>
+      @for (cat of categories(); track cat) {
+        <option [value]="cat">{{ formatCategory(cat) }}</option>
+      }
+    </select>
+
+    <hlm-toggle-group
+      type="single"
+      variant="outline"
+      [value]="viewMode()"
+      (valueChange)="onViewModeChange($event)"
+    >
+      <button
+        hlmToggleGroupItem
+        value="cards"
+        aria-label="Vista tarjetas"
+      >
+        <ng-icon name="lucideLayoutGrid" class="size-4" />
+      </button>
+      <button
+        hlmToggleGroupItem
+        value="table"
+        aria-label="Vista tabla"
+      >
+        <ng-icon name="lucideLayoutList" class="size-4" />
+      </button>
+    </hlm-toggle-group>
+  </div>
+</div>
+
+<!-- Content -->
+@if (viewMode() === 'cards') {
+  @if (filteredAssets().length === 0) {
+    <app-empty-state
+      title="No se encontraron activos"
+      description="Intente ajustando los filtros de búsqueda."
+      icon="lucideSearch"
+    />
+  } @else {
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      @for (asset of filteredAssets(); track asset.id) {
+        <hlm-card
+          class="cursor-pointer transition-colors hover:bg-accent/50"
+          (click)="openDetail(asset)"
+          (keydown.enter)="openDetail(asset)"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="'Ver detalle de ' + asset.nombre"
+        >
+          <div hlm-card-header>
+            <div hlmCardAction>
+              <span class="font-mono text-xs text-muted-foreground">
+                {{ asset.id }}
+              </span>
+            </div>
+            <h3 hlmCardTitle>{{ asset.nombre }}</h3>
+            <p hlmCardDescription>
+              {{ formatCategory(asset.categoria) }} &middot; {{ asset.ubicacion }}
+            </p>
+          </div>
+          <div hlmCardContent>
+            <div class="flex flex-wrap items-center gap-2">
+              <app-status-badge
+                [status]="asset.criticidad"
+                kind="priority"
+              />
+              <app-status-badge
+                [status]="asset.estado"
+                kind="asset"
+              />
+            </div>
+          </div>
+          <div hlm-card-footer class="flex-col items-start gap-1 text-xs text-muted-foreground">
+            <span>Última mantención: {{ formatDate(asset.ultimoMantenimiento) }}</span>
+            <span>Próxima mantención: {{ formatDate(asset.proximoMantenimiento) }}</span>
+          </div>
+        </hlm-card>
+      }
+    </div>
+  }
+} @else {
+  @if (filteredAssets().length === 0) {
+    <app-empty-state
+      title="No se encontraron activos"
+      description="Intente ajustando los filtros de búsqueda."
+      icon="lucideSearch"
+    />
+  } @else {
+    <app-data-table
+      [columns]="tableColumns"
+      [rows]="tableRows()"
+      [pageSize]="10"
+      searchPlaceholder="Buscar en tabla..."
+    />
+  }
+}
+
+<ng-template #detailDialog>
+  @if (selectedAsset(); as asset) {
+    <hlm-dialog>
+      <hlm-dialog-content class="sm:max-w-2xl">
+        <hlm-dialog-header>
+          <h3 hlmDialogTitle>{{ asset.nombre }}</h3>
+          <p hlmDialogDescription>{{ asset.id }}</p>
+        </hlm-dialog-header>
+
+        <hlm-tabs tab="info" class="w-full">
+          <hlm-tabs-list aria-label="Detalle del activo">
+            <button hlmTabsTrigger="info">Información</button>
+            <button hlmTabsTrigger="history">Historial</button>
+            <button hlmTabsTrigger="preventive">Preventivo</button>
+          </hlm-tabs-list>
+
+          <!-- Info Tab -->
+          <div hlmTabsContent="info" class="mt-4 space-y-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Fabricante</p>
+                <p class="mt-1">{{ asset.fabricante }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Modelo</p>
+                <p class="mt-1">{{ asset.modelo }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Número de serie</p>
+                <p class="mt-1 font-mono text-xs">{{ asset.numeroSerie }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Fecha de instalación</p>
+                <p class="mt-1">{{ formatDate(asset.fechaInstalacion) }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Categoría</p>
+                <p class="mt-1">{{ formatCategory(asset.categoria) }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Ubicación</p>
+                <p class="mt-1">{{ asset.ubicacion }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Criticidad</p>
+                <div class="mt-1">
+                  <app-status-badge [status]="asset.criticidad" kind="priority" />
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-muted-foreground">Estado</p>
+                <div class="mt-1">
+                  <app-status-badge [status]="asset.estado" kind="asset" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- History Tab -->
+          <div hlmTabsContent="history" class="mt-4">
+            @if (detailWorkOrders().length === 0) {
+              <app-empty-state
+                title="Sin órdenes de trabajo"
+                description="No hay órdenes de trabajo registradas para este activo."
+                icon="lucideClipboardList"
+              />
+            } @else {
+              <div class="space-y-3">
+                @for (wo of detailWorkOrders(); track wo.id) {
+                  <div class="rounded-lg border p-3">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="font-medium">{{ wo.titulo }}</p>
+                        <p class="mt-1 font-mono text-xs text-muted-foreground">{{ wo.id }}</p>
+                      </div>
+                      <app-status-badge [status]="wo.estado" kind="work-order" />
+                    </div>
+                    <p class="mt-2 text-xs text-muted-foreground">{{ wo.descripcion }}</p>
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span>Tipo: {{ wo.tipo }}</span>
+                      <span>&middot;</span>
+                      <span>Técnico: {{ wo.tecnicoAsignado }}</span>
+                      <span>&middot;</span>
+                      <span>Costo: {{ formatCurrency(wo.costoEstimado) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Preventive Tab -->
+          <div hlmTabsContent="preventive" class="mt-4">
+            @if (detailPreventivePlans().length === 0) {
+              <app-empty-state
+                title="Sin planes preventivos"
+                description="No hay planes de mantenimiento preventivo para este activo."
+                icon="lucideCalendarCheck"
+              />
+            } @else {
+              <div class="space-y-3">
+                @for (plan of detailPreventivePlans(); track plan.id) {
+                  <div class="rounded-lg border p-3">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="font-medium">{{ plan.nombre }}</p>
+                        <p class="mt-1 font-mono text-xs text-muted-foreground">{{ plan.id }}</p>
+                      </div>
+                      <app-status-badge [status]="plan.estado" kind="generic" />
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span>Frecuencia: {{ plan.frecuencia }}</span>
+                      <span>&middot;</span>
+                      <span>Técnico: {{ plan.tecnico }}</span>
+                      <span>&middot;</span>
+                      <span>Duración: {{ plan.duracionEstimadaHoras }}h</span>
+                    </div>
+                    <div class="mt-2 flex gap-4 text-xs text-muted-foreground">
+                      <span>Última ejecución: {{ plan.ultimaEjecucion ? formatDate(plan.ultimaEjecucion) : 'N/A' }}</span>
+                      <span>Próxima: {{ formatDate(plan.proximaFecha) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </hlm-tabs>
+
+        <hlm-dialog-footer>
+          <button hlmBtn variant="outline" hlmDialogClose>Cerrar</button>
+        </hlm-dialog-footer>
+      </hlm-dialog-content>
+    </hlm-dialog>
+  }
+</ng-template>

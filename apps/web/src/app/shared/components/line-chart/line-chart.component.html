@@ -1,0 +1,64 @@
+<svg
+  [attr.viewBox]="'0 0 500 ' + height()"
+  [attr.aria-label]="ariaLabel() || 'Gráfico de líneas'"
+  role="img"
+  class="h-auto w-full"
+  preserveAspectRatio="xMidYMid meet"
+>
+  <defs>
+    <linearGradient [attr.id]="gradientId" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
+    </linearGradient>
+  </defs>
+
+  @for (val of gridLines(); track val) {
+    <line
+      [attr.x1]="40"
+      [attr.y1]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue())"
+      [attr.x2]="484"
+      [attr.y2]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue())"
+      class="stroke-border"
+      stroke-width="0.5"
+    />
+    <text
+      [attr.x]="36"
+      [attr.y]="padding.top + (height() - padding.top - padding.bottom) * (1 - val / maxValue()) + 3"
+      text-anchor="end"
+      class="fill-muted-foreground text-[9px]"
+    >{{ val }}</text>
+  }
+
+  @if (areaD(); as ad) {
+    <path [attr.d]="ad" [attr.fill]="'url(#' + gradientId + ')'" />
+  }
+  @if (pathD(); as pd) {
+    <path
+      [attr.d]="pd"
+      fill="none"
+      stroke="var(--primary)"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  }
+
+  @for (pt of points(); track pt.label) {
+    <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3" class="fill-primary" />
+    <text
+      [attr.x]="pt.x"
+      [attr.y]="pt.y - 8"
+      text-anchor="middle"
+      class="fill-foreground text-[9px] font-medium"
+    >{{ pt.value }}</text>
+  }
+
+  @for (lp of labelPositions(); track lp.label) {
+    <text
+      [attr.x]="lp.x"
+      [attr.y]="height() - 6"
+      text-anchor="middle"
+      class="fill-muted-foreground text-[9px]"
+    >{{ lp.label }}</text>
+  }
+</svg>

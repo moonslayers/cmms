@@ -1,0 +1,75 @@
+<div class="flex flex-col gap-3">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <ng-content />
+    @if (searchable()) {
+      <input
+        hlmInput
+        type="text"
+        class="w-full sm:w-64"
+        [placeholder]="searchPlaceholder()"
+        [ngModel]="searchQuery()"
+        (input)="onSearch($event)"
+      />
+    }
+  </div>
+
+  <div hlmTableContainer>
+    <table hlmTable>
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          @for (col of columns(); track col.key) {
+            <th hlmTableHead [class]="cellAlign(col)">{{ col.label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody hlmTableBody>
+        @for (row of paginatedRows(); track $index) {
+          <tr hlmTableRow>
+            @for (col of columns(); track col.key) {
+              <td hlmTableCell [class]="cellClass(col)">
+                @if (col.type === 'status') {
+                  <app-status-badge [status]="toStr(row[col.key])" />
+                } @else {
+                  {{ row[col.key] }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (filteredRows().length === 0) {
+      <app-empty-state
+        title="Sin resultados"
+        description="No se encontraron registros que coincidan con la búsqueda."
+        icon="lucideSearch"
+      />
+    }
+  </div>
+
+  @if (filteredRows().length > 0) {
+    <div class="flex items-center justify-between text-sm">
+      <span class="text-muted-foreground">
+        Mostrando {{ (currentPage() - 1) * pageSize() + 1 }}-{{ Math.min(currentPage() * pageSize(), filteredRows().length) }}
+        de {{ filteredRows().length }}
+      </span>
+      <div class="flex items-center gap-1">
+        <button hlmBtn variant="outline" size="icon-xs" (click)="prevPage()" [disabled]="currentPage() <= 1">
+          <ng-icon name="lucideChevronLeft" class="text-[length:--spacing(3)]" />
+        </button>
+        @for (p of visiblePages(); track p) {
+          <button
+            hlmBtn
+            [variant]="p === currentPage() ? 'default' : 'outline'"
+            size="icon-xs"
+            (click)="goToPage(p)"
+          >{{ p }}</button>
+        }
+        <button hlmBtn variant="outline" size="icon-xs" (click)="nextPage()" [disabled]="currentPage() >= totalPages()">
+          <ng-icon name="lucideChevronRight" class="text-[length:--spacing(3)]" />
+        </button>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,16 @@
+<div hlmEmpty>
+  <div hlmEmptyHeader>
+    @if (icon(); as iconName) {
+      <hlm-empty-media variant="icon">
+        <ng-icon [name]="iconName" />
+      </hlm-empty-media>
+    }
+    <div hlmEmptyTitle>{{ title() }}</div>
+    @if (description(); as desc) {
+      <div hlmEmptyDescription>{{ desc }}</div>
+    }
+  </div>
+  <hlm-empty-content>
+    <ng-content />
+  </hlm-empty-content>
+</div>

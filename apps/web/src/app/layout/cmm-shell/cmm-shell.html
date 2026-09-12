@@ -1,0 +1,157 @@
+<div hlmSidebarWrapper>
+  <hlm-sidebar side="left" collapsible="offcanvas">
+    <hlm-sidebar-header>
+      <div class="flex items-center gap-2 px-2 py-2">
+        <div class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-sm">
+          M
+        </div>
+        <span class="truncate text-base font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
+          Mantia
+        </span>
+      </div>
+    </hlm-sidebar-header>
+
+    <hlm-sidebar-content>
+      <hlm-sidebar-group>
+        <div hlmSidebarGroupLabel>Navegación</div>
+        <div hlmSidebarGroupContent>
+          <ul hlmSidebarMenu>
+            @for (item of navItems; track item.route) {
+              <li hlm-sidebar-menu-item>
+                <a
+                  hlmSidebarMenuButton
+                  [routerLink]="item.route"
+                  routerLinkActive="data-[active=true]"
+                  [routerLinkActiveOptions]="{ exact: item.route === '/app/dashboard' }"
+                  [tooltip]="item.label"
+                >
+                  <ng-icon [name]="item.icon" />
+                  <span>{{ item.label }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </hlm-sidebar-group>
+    </hlm-sidebar-content>
+
+    <hlm-sidebar-footer>
+      @if (user(); as u) {
+        <div hlm-sidebar-menu>
+          <div hlm-sidebar-menu-item>
+            <button
+              hlmSidebarMenuButton
+              size="lg"
+              [hlmDropdownMenuTrigger]="userMenu"
+              align="start"
+              class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <hlm-avatar class="size-8 shrink-0">
+                <span hlmAvatarFallback class="text-xs">{{ userInitials() }}</span>
+              </hlm-avatar>
+              <div class="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
+                <span class="truncate text-sm font-medium">{{ u.nombre }}</span>
+                <span class="truncate text-xs text-muted-foreground">{{ u.email }}</span>
+              </div>
+              <ng-icon name="lucideChevronsUpDown" class="ml-auto text-muted-foreground group-data-[collapsible=icon]:hidden" />
+            </button>
+          </div>
+        </div>
+
+        <ng-template #userMenu>
+          <hlm-dropdown-menu class="w-56">
+            <hlm-dropdown-menu-label>Mi cuenta</hlm-dropdown-menu-label>
+            <hlm-dropdown-menu-separator />
+            <hlm-dropdown-menu-group>
+              <button hlmDropdownMenuItem>
+                <ng-icon name="lucideUser" />
+                Mi perfil
+              </button>
+            </hlm-dropdown-menu-group>
+            <hlm-dropdown-menu-separator />
+            <hlm-dropdown-menu-group>
+              <button hlmDropdownMenuItem (click)="logout()">
+                <ng-icon name="lucideLogOut" />
+                Cerrar sesión
+              </button>
+            </hlm-dropdown-menu-group>
+          </hlm-dropdown-menu>
+        </ng-template>
+      }
+    </hlm-sidebar-footer>
+  </hlm-sidebar>
+
+  <main hlmSidebarInset>
+    <header class="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
+      <button hlmSidebarTrigger>
+        <span class="sr-only">Alternar barra lateral</span>
+      </button>
+      <div class="relative ml-auto flex items-center gap-2">
+        <div class="relative hidden sm:block">
+          <ng-icon name="lucideSearch" class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            hlmInput
+            placeholder="Buscar..."
+            class="h-8 w-48 pl-8 lg:w-64"
+          />
+        </div>
+        <button hlmBtn variant="ghost" size="icon-sm" hlmTooltip="Notificaciones" [hlmDropdownMenuTrigger]="notifMenu">
+          <ng-icon name="lucideBell" />
+          <span class="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent"></span>
+        </button>
+        <ng-template #notifMenu>
+          <hlm-dropdown-menu class="w-64">
+            <hlm-dropdown-menu-label>Notificaciones</hlm-dropdown-menu-label>
+            <hlm-dropdown-menu-separator />
+            <div class="p-4 text-center text-sm text-muted-foreground">
+              Sin notificaciones nuevas
+            </div>
+          </hlm-dropdown-menu>
+        </ng-template>
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon-sm"
+          hlmTooltip="Cambiar tema"
+          (click)="_theme.toggleTheme()"
+        >
+          @if (_theme.isDark()) {
+            <ng-icon name="lucideSun" />
+          } @else {
+            <ng-icon name="lucideMoon" />
+          }
+        </button>
+        @if (user(); as u) {
+          <button hlmBtn variant="ghost" size="icon-sm" class="rounded-full" [hlmDropdownMenuTrigger]="topUserMenu">
+            <hlm-avatar class="size-7">
+              <span hlmAvatarFallback class="text-xs">{{ userInitials() }}</span>
+            </hlm-avatar>
+          </button>
+          <ng-template #topUserMenu>
+            <hlm-dropdown-menu class="w-56">
+              <hlm-dropdown-menu-label>{{ u.nombre }}</hlm-dropdown-menu-label>
+              <hlm-dropdown-menu-separator />
+              <hlm-dropdown-menu-group>
+                <button hlmDropdownMenuItem>
+                  <ng-icon name="lucideUser" />
+                  Mi perfil
+                </button>
+              </hlm-dropdown-menu-group>
+              <hlm-dropdown-menu-separator />
+              <hlm-dropdown-menu-group>
+                <button hlmDropdownMenuItem (click)="logout()">
+                  <ng-icon name="lucideLogOut" />
+                  Cerrar sesión
+                </button>
+              </hlm-dropdown-menu-group>
+            </hlm-dropdown-menu>
+          </ng-template>
+        }
+      </div>
+    </header>
+
+    <section class="flex-1 overflow-auto bg-background p-6">
+      <router-outlet />
+    </section>
+  </main>
+</div>

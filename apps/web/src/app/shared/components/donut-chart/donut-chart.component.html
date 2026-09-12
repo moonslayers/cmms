@@ -1,0 +1,31 @@
+<div class="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
+  <svg
+    [attr.width]="size()"
+    [attr.height]="size()"
+    [attr.viewBox]="'0 0 ' + size() + ' ' + size()"
+    [attr.aria-label]="ariaLabel() || 'Gráfico de dona'"
+    role="img"
+    class="shrink-0"
+  >
+    @for (seg of segments(); track seg.label) {
+      <path
+        [attr.d]="describeArc(size() / 2, size() / 2, size() / 2 - 10, seg.startAngle, seg.endAngle)"
+        fill="none"
+        [attr.stroke]="seg.color"
+        stroke-width="16"
+        stroke-linecap="round"
+      />
+    }
+  </svg>
+
+  <div class="flex flex-col gap-1.5">
+    @for (item of legendItems(); track item.label) {
+      <div class="flex items-center gap-2 text-sm">
+        <span class="size-2.5 shrink-0 rounded-full" [style.background]="item.color"></span>
+        <span class="text-foreground">{{ item.label }}</span>
+        <span class="text-muted-foreground ml-auto tabular-nums">{{ item.value }}</span>
+        <span class="text-muted-foreground w-10 text-right tabular-nums">{{ item.percentage }}%</span>
+      </div>
+    }
+  </div>
+</div>

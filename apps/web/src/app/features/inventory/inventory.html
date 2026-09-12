@@ -1,0 +1,200 @@
+<app-page-header
+  title="Inventario y repuestos"
+  subtitle="Gestión de repuestos y stock del almacén"
+  [breadcrumbs]="[{ label: 'Panel de control', link: '/app/dashboard' }, { label: 'Inventario' }]"
+>
+  <button actions hlmBtn (click)="openDialog()">
+    <ng-icon name="lucidePlus" class="text-[length:--spacing(4)]" />
+    Registrar movimiento
+  </button>
+</app-page-header>
+
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <app-stat-card
+    label="Total SKUs"
+    [value]="totalSkus()"
+    hint="Repuestos registrados"
+    icon="lucidePackage"
+  />
+  <app-stat-card
+    label="Bajo stock"
+    [value]="lowStockCount()"
+    hint="Por debajo del mínimo"
+    icon="lucideTriangleAlert"
+  />
+  <app-stat-card
+    label="Valor total"
+    [value]="formatCurrency(totalValue())"
+    hint="Valor del inventario actual"
+    icon="lucideCircleDollarSign"
+  />
+  <app-stat-card
+    label="En pedido"
+    [value]="outOfStockCount()"
+    hint="Repuestos agotados"
+    icon="lucideRefreshCw"
+  />
+</div>
+
+<app-section-card
+  title="Alertas de stock"
+  description="Repuestos por debajo del nivel mínimo de reorden"
+>
+  <div body class="flex flex-col gap-3">
+    @for (part of lowStockParts(); track part.sku) {
+      <div
+        class="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950"
+      >
+        <div class="flex items-center gap-3">
+          <ng-icon name="lucideTriangleAlert" class="text-amber-600 dark:text-amber-400" />
+          <div>
+            <p class="text-sm font-medium">{{ part.nombre }}</p>
+            <p class="text-muted-foreground text-xs">
+              Stock: {{ part.stockActual }} {{ part.unidad }} · Mínimo: {{ part.stockMinimo }}
+              {{ part.unidad }}
+            </p>
+          </div>
+        </div>
+        <div class="shrink-0 text-right">
+          <p class="text-sm font-semibold">Sugerido: {{ reorderQty(part) }}</p>
+          <p class="text-muted-foreground text-xs">Reordenar</p>
+        </div>
+      </div>
+    } @empty {
+      <app-empty-state
+        title="Sin alertas"
+        description="Todos los repuestos están por encima del nivel mínimo."
+        icon="lucideCircleCheck"
+      />
+    }
+  </div>
+</app-section-card>
+
+<app-section-card title="Catálogo de repuestos" description="Listado completo del inventario">
+  <div body class="flex flex-col gap-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <app-search-input
+        [(value)]="searchQuery"
+        placeholder="Buscar por SKU, nombre, proveedor..."
+        class="w-full sm:flex-1"
+      />
+      <hlm-select
+        [value]="selectedCategory()"
+        (valueChange)="selectedCategory.set($event ?? '')"
+        [itemToString]="categoryItemToString"
+      >
+        <button hlmSelectTrigger class="w-full sm:w-48">
+          <hlm-select-value placeholder="Categoría" />
+        </button>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-item value="">Todas</hlm-select-item>
+          @for (cat of categories(); track cat) {
+            <hlm-select-item [value]="cat">{{ categoryItemToString(cat) }}</hlm-select-item>
+          }
+        </hlm-select-content>
+      </hlm-select>
+
+      <hlm-select
+        [value]="selectedStockStatus()"
+        (valueChange)="selectedStockStatus.set($event ?? '')"
+        [itemToString]="stockStatusItemToString"
+      >
+        <button hlmSelectTrigger class="w-full sm:w-48">
+          <hlm-select-value placeholder="Estado de stock" />
+        </button>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-item value="">Todos</hlm-select-item>
+          <hlm-select-item value="disponible">Disponible</hlm-select-item>
+          <hlm-select-item value="bajo">Bajo</hlm-select-item>
+          <hlm-select-item value="agotado">Agotado</hlm-select-item>
+        </hlm-select-content>
+      </hlm-select>
+    </div>
+
+    <app-data-table [columns]="columns" [rows]="tableRows()" [searchable]="false" [pageSize]="8" />
+  </div>
+</app-section-card>
+
+<ng-template #movementDialog>
+  <hlm-dialog>
+    <hlm-dialog-content class="sm:max-w-md">
+      <hlm-dialog-header>
+        <h3 hlmDialogTitle>Registrar movimiento</h3>
+        <p hlmDialogDescription>Registra una entrada o salida de inventario.</p>
+      </hlm-dialog-header>
+
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium" for="mov-tipo">Tipo de movimiento</label>
+          <div id="mov-tipo" class="flex gap-2">
+            <button
+              hlmBtn
+              [variant]="movimientoTipo() === 'entrada' ? 'default' : 'outline'"
+              (click)="movimientoTipo.set('entrada')"
+            >
+              Entrada
+            </button>
+            <button
+              hlmBtn
+              [variant]="movimientoTipo() === 'salida' ? 'default' : 'outline'"
+              (click)="movimientoTipo.set('salida')"
+            >
+              Salida
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium" for="mov-repuesto">Repuesto</label>
+          <hlm-select
+            [value]="movimientoRepuesto()"
+            (valueChange)="movimientoRepuesto.set($event ?? '')"
+            [itemToString]="partItemToString"
+          >
+            <button hlmSelectTrigger class="w-full">
+              <hlm-select-value placeholder="Seleccionar repuesto" />
+            </button>
+            <hlm-select-content *hlmSelectPortal>
+              @for (part of parts; track part.sku) {
+                <hlm-select-item [value]="part.sku"
+                  >{{ part.sku }} - {{ part.nombre }}</hlm-select-item
+                >
+              }
+            </hlm-select-content>
+          </hlm-select>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium" for="mov-cantidad">Cantidad</label>
+          <input
+            hlmInput
+            id="mov-cantidad"
+            type="number"
+            [ngModel]="movimientoCantidad()"
+            (ngModelChange)="movimientoCantidad.set($event)"
+            min="1"
+            class="w-full"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium" for="mov-motivo">Motivo</label>
+          <textarea
+            hlmInput
+            id="mov-motivo"
+            [ngModel]="movimientoMotivo()"
+            (ngModelChange)="movimientoMotivo.set($event)"
+            rows="3"
+            class="w-full resize-none"
+            placeholder="Descripción del movimiento..."
+          ></textarea>
+        </div>
+      </div>
+
+      <hlm-dialog-footer>
+        <button hlmBtn variant="outline" hlmDialogClose>Cancelar</button>
+        <button hlmBtn hlmDialogClose (click)="confirmMovimiento()">Confirmar</button>
+      </hlm-dialog-footer>
+    </hlm-dialog-content>
+  </hlm-dialog>
+</ng-template>

@@ -1,0 +1,81 @@
+import type { Location } from '../models';
+
+export const MOCK_LOCATIONS: Location[] = [
+  {
+    id: 'LOC-001',
+    nombre: 'Planta A',
+    tipo: 'planta',
+    parentId: null,
+    activosCount: 7,
+  },
+  {
+    id: 'LOC-002',
+    nombre: 'Planta B',
+    tipo: 'planta',
+    parentId: null,
+    activosCount: 5,
+  },
+  {
+    id: 'LOC-010',
+    nombre: 'Área de Manufactura',
+    tipo: 'área',
+    parentId: 'LOC-001',
+    activosCount: 2,
+  },
+  {
+    id: 'LOC-011',
+    nombre: 'Área de Servicios Generales',
+    tipo: 'área',
+    parentId: 'LOC-001',
+    activosCount: 3,
+  },
+  {
+    id: 'LOC-012',
+    nombre: 'Área de Procesos',
+    tipo: 'área',
+    parentId: 'LOC-001',
+    activosCount: 2,
+  },
+  {
+    id: 'LOC-020',
+    nombre: 'Área de Tratamiento Térmico',
+    tipo: 'área',
+    parentId: 'LOC-002',
+    activosCount: 1,
+  },
+  {
+    id: 'LOC-021',
+    nombre: 'Área de Almacén',
+    tipo: 'área',
+    parentId: 'LOC-002',
+    activosCount: 1,
+  },
+  {
+    id: 'LOC-022',
+    nombre: 'Área de Generación',
+    tipo: 'área',
+    parentId: 'LOC-002',
+    activosCount: 1,
+  },
+  {
+    id: 'LOC-030',
+    nombre: 'CNC Zona Norte',
+    tipo: 'ubicación',
+    parentId: 'LOC-010',
+    activosCount: 2,
+  },
+  {
+    id: 'LOC-031',
+    nombre: 'Estación 3 - Bombas',
+    tipo: 'ubicación',
+    parentId: 'LOC-012',
+    activosCount: 1,
+  },
+  {
+    id: 'LOC-032',
+    nombre: 'Zona A - Almacén',
+    tipo: 'ubicación',
+    parentId: 'LOC-021',
+    activosCount: 1,
+  },
+];

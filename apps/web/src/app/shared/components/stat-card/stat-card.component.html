@@ -1,0 +1,26 @@
+<section hlmCard>
+  <div hlmCardHeader>
+    <div class="flex items-center justify-between">
+      <span hlmCardDescription>{{ label() }}</span>
+      @if (icon(); as iconName) {
+        <ng-icon [name]="iconName" class="text-muted-foreground text-[length:--spacing(4)]" />
+      }
+    </div>
+  </div>
+  <div hlmCardContent>
+    <div class="flex items-baseline gap-2">
+      <span class="text-2xl font-bold tracking-tight tabular-nums text-foreground">{{ value() }}</span>
+      @if (trend(); as t) {
+        <span class="flex items-center gap-0.5 text-xs font-medium" [class]="trendClass()">
+          <ng-icon [name]="trendIcon()" class="text-[length:--spacing(3)]" />
+          @if (delta(); as d) {
+            <span>{{ d }}</span>
+          }
+        </span>
+      }
+    </div>
+    @if (hint(); as h) {
+      <p class="text-muted-foreground mt-1 text-xs">{{ h }}</p>
+    }
+  </div>
+</section>

@@ -1,0 +1,104 @@
+<app-page-header
+  title="Técnicos y personal"
+  subtitle="Gestión del equipo técnico y asignación de recursos"
+  [breadcrumbs]="[
+    { label: 'Panel de control', link: '/app/dashboard' },
+    { label: 'Técnicos' }
+  ]"
+/>
+
+<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <app-stat-card
+    label="Total técnicos"
+    [value]="totalTecnicos()"
+    icon="lucideUsers"
+  />
+  <app-stat-card
+    label="Disponibles"
+    [value]="disponibles()"
+    icon="lucideCheck"
+    trend="up"
+    delta="+2"
+  />
+  <app-stat-card
+    label="Ocupados"
+    [value]="ocupados()"
+    icon="lucideWrench"
+  />
+  <app-stat-card
+    label="Carga media"
+    [value]="cargaMedia() + '%'"
+    icon="lucideGauge"
+    hint="promedio del equipo"
+  />
+</div>
+
+<div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <app-search-input
+    [value]="searchQuery()"
+    (valueChange)="onSearchChange($event)"
+    placeholder="Buscar técnico..."
+  />
+  <label for="specialty-filter" class="sr-only">Especialidad</label>
+  <select
+    id="specialty-filter"
+    class="border-input bg-background text-foreground h-9 rounded-lg border px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+    (change)="onSpecialtyChange($event)"
+  >
+    @for (spec of specialties; track spec.value) {
+      <option [value]="spec.value" [selected]="specialtyFilter() === spec.value">
+        {{ spec.label }}
+      </option>
+    }
+  </select>
+</div>
+
+<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  @for (tech of filteredTechnicians(); track tech.id) {
+    <section hlmCard class="flex flex-col gap-4 p-5">
+      <div class="flex items-start gap-4">
+        <hlm-avatar>
+          <span hlmAvatarFallback>{{ tech.iniciales }}</span>
+        </hlm-avatar>
+        <div class="min-w-0 flex-1">
+          <h3 class="text-foreground truncate text-sm font-semibold">{{ tech.nombre }}</h3>
+          <p class="text-muted-foreground truncate text-xs">{{ tech.email }}</p>
+          <p class="text-muted-foreground truncate text-xs">{{ tech.telefono }}</p>
+        </div>
+        <app-status-badge [status]="availabilityLabel(tech.disponibilidad)" />
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span
+          hlmBadge
+          variant="outline"
+          class="text-xs"
+          [class]="specialtyBadgeClass(tech.especialidad)"
+        >
+          {{ tech.especialidad | titlecase }}
+        </span>
+        <span class="text-muted-foreground text-xs">
+          {{ tech.ordenesActivas }} órdenes activas
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-muted-foreground">Carga de trabajo</span>
+          <span class="font-medium">{{ tech.cargaTrabajo }}%</span>
+        </div>
+        <hlm-progress [value]="tech.cargaTrabajo">
+          <hlm-progress-indicator />
+        </hlm-progress>
+      </div>
+    </section>
+  } @empty {
+    <div class="col-span-full">
+      <app-empty-state
+        title="No se encontraron técnicos"
+        description="Intenta ajustar los filtros de búsqueda"
+        icon="lucideUsers"
+      />
+    </div>
+  }
+</div>

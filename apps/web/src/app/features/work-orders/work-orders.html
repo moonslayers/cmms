@@ -1,0 +1,309 @@
+<app-page-header
+  title="Órdenes de trabajo"
+  subtitle="Gestión y seguimiento de órdenes de mantenimiento"
+  [breadcrumbs]="[{ label: 'Panel de control', link: '/app/dashboard' }, { label: 'Órdenes de trabajo' }]"
+>
+  <button hlmBtn actions (click)="openNewOrder()">
+    <ng-icon name="lucidePlus" class="text-[length:--spacing(4)]" />
+    Nueva orden
+  </button>
+</app-page-header>
+
+<div class="mt-6 flex flex-col gap-6">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <app-stat-card label="Total órdenes" [value]="totalOrders()" icon="lucideClipboardList" />
+    <app-stat-card label="Abiertas" [value]="openOrders()" icon="lucideClock" />
+    <app-stat-card label="En progreso" [value]="inProgressOrders()" icon="lucideWrench" />
+    <app-stat-card
+      label="Completadas este mes"
+      [value]="completedThisMonth()"
+      icon="lucideCircleCheck"
+    />
+  </div>
+
+  <app-section-card title="Filtros" description="Refina la búsqueda de órdenes de trabajo">
+    <div actions>
+      <ng-icon name="lucideFilter" class="text-muted-foreground text-[length:--spacing(4)]" />
+    </div>
+    <div body>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div class="flex-1">
+          <app-search-input
+            [(value)]="searchText"
+            placeholder="Buscar por código, título, activo o técnico..."
+          />
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <hlm-select
+            [itemToString]="estadoToString"
+            (valueChange)="filterEstado.set($event ?? '')"
+            class="w-44"
+          >
+            <hlm-select-trigger>
+              <hlm-select-value placeholder="Estado" />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (opt of estadoOptions; track opt.value) {
+                  <hlm-select-item [value]="opt.value">{{ opt.label }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+
+          <hlm-select
+            [itemToString]="prioridadToString"
+            (valueChange)="filterPrioridad.set($event ?? '')"
+            class="w-44"
+          >
+            <hlm-select-trigger>
+              <hlm-select-value placeholder="Prioridad" />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (opt of prioridadOptions; track opt.value) {
+                  <hlm-select-item [value]="opt.value">{{ opt.label }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+
+          <hlm-select
+            [itemToString]="tecnicoToString"
+            (valueChange)="filterTecnico.set($event ?? '')"
+            class="w-48"
+          >
+            <hlm-select-trigger>
+              <hlm-select-value placeholder="Técnico" />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (opt of tecnicoOptions; track opt.value) {
+                  <hlm-select-item [value]="opt.value">{{ opt.label }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        </div>
+      </div>
+    </div>
+  </app-section-card>
+
+  <app-section-card title="Lista de órdenes">
+    <div body>
+      @if (filteredOrders().length === 0) {
+        <app-empty-state
+          title="Sin resultados"
+          description="No se encontraron órdenes de trabajo con los filtros aplicados."
+          icon="lucideClipboardList"
+        />
+      } @else {
+        <div
+          role="button"
+          tabindex="0"
+          (click)="onTableClick($event)"
+          (keydown.enter)="onTableClick($event)"
+          (keydown.space)="onTableClick($event)"
+        >
+          <app-data-table
+            [columns]="tableColumns"
+            [rows]="tableRows()"
+            [searchable]="false"
+            [pageSize]="8"
+          />
+        </div>
+      }
+    </div>
+  </app-section-card>
+</div>
+
+<ng-template #detailDialog>
+  @if (selectedOrder(); as order) {
+    <hlm-dialog>
+      <hlm-dialog-content class="sm:max-w-lg">
+        <hlm-dialog-header>
+          <h3 hlmDialogTitle>{{ order.id }} — {{ order.titulo }}</h3>
+          <p hlmDialogDescription>{{ order.descripcion }}</p>
+        </hlm-dialog-header>
+
+        <div class="flex flex-col gap-4">
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <span class="text-muted-foreground">Activo</span>
+              <p class="font-mono text-foreground">{{ order.assetTag }}</p>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Ubicación</span>
+              <p class="text-foreground">{{ order.ubicacion }}</p>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Prioridad</span>
+              <div class="mt-1">
+                <app-status-badge [status]="order.prioridad" kind="priority" />
+              </div>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Estado</span>
+              <div class="mt-1">
+                <app-status-badge [status]="order.estado" kind="work-order" />
+              </div>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Tipo</span>
+              <p class="text-foreground capitalize">{{ order.tipo }}</p>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Técnico</span>
+              <p class="text-foreground">{{ order.tecnicoAsignado }}</p>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Fecha programada</span>
+              <p class="text-foreground">{{ order.fechaProgramada | date: 'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Costo estimado</span>
+              <p class="font-mono tabular-nums text-foreground">
+                {{ order.costoEstimado | currency: 'MXN' : 'symbol' : '1.0-0' }}
+              </p>
+            </div>
+          </div>
+
+          @if (order.repuestosUsados.length > 0) {
+            <div>
+              <span class="text-muted-foreground text-sm">Repuestos usados</span>
+              <div class="mt-1 flex flex-wrap gap-1">
+                @for (repuesto of order.repuestosUsados; track repuesto) {
+                  <span
+                    class="bg-secondary text-secondary-foreground inline-flex items-center rounded-md px-2 py-0.5 text-xs font-mono"
+                  >
+                    {{ repuesto }}
+                  </span>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="border-t pt-4">
+            <h4 class="text-foreground mb-3 text-sm font-medium">Actividad</h4>
+            <div class="relative ml-2 flex flex-col gap-4 border-l pl-4">
+              @for (step of detailTimeline(); track step.label; let last = $last) {
+                <div class="relative flex items-start gap-3">
+                  <div
+                    class="absolute -left-[21px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full"
+                    [class]="
+                      step.done
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    "
+                  >
+                    <ng-icon [name]="step.icon" class="text-[length:--spacing(2.5)]" />
+                  </div>
+                  <div class="flex-1">
+                    <p
+                      [class]="
+                        step.done ? 'text-foreground text-sm' : 'text-muted-foreground text-sm'
+                      "
+                    >
+                      {{ step.label }}
+                    </p>
+                    <p class="text-muted-foreground text-xs">
+                      {{ step.date | date: 'dd/MM/yyyy HH:mm' }}
+                    </p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <hlm-dialog-footer>
+          <button hlmBtn variant="outline" hlmDialogClose>Cerrar</button>
+        </hlm-dialog-footer>
+      </hlm-dialog-content>
+    </hlm-dialog>
+  }
+</ng-template>
+
+<ng-template #newOrderDialog>
+  <hlm-dialog>
+    <hlm-dialog-content class="sm:max-w-md">
+      <hlm-dialog-header>
+        <h3 hlmDialogTitle>Nueva orden de trabajo</h3>
+        <p hlmDialogDescription>Completa los datos para crear una nueva orden.</p>
+      </hlm-dialog-header>
+
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-foreground text-sm font-medium" for="wo-titulo">Título</label>
+          <input hlmInput id="wo-titulo" placeholder="Ej: Cambio de rodamiento..." />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-foreground text-sm font-medium" for="wo-tipo">Tipo</label>
+            <hlm-select [itemToString]="tipoToString" class="w-full">
+              <hlm-select-trigger id="wo-tipo">
+                <hlm-select-value placeholder="Seleccionar..." />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  <hlm-select-item value="correctivo">Correctivo</hlm-select-item>
+                  <hlm-select-item value="preventivo">Preventivo</hlm-select-item>
+                  <hlm-select-item value="predictivo">Predictivo</hlm-select-item>
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-foreground text-sm font-medium" for="wo-prioridad">Prioridad</label>
+            <hlm-select [itemToString]="prioridadToString" class="w-full">
+              <hlm-select-trigger id="wo-prioridad">
+                <hlm-select-value placeholder="Seleccionar..." />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  <hlm-select-item value="baja">Baja</hlm-select-item>
+                  <hlm-select-item value="media">Media</hlm-select-item>
+                  <hlm-select-item value="alta">Alta</hlm-select-item>
+                  <hlm-select-item value="crítica">Crítica</hlm-select-item>
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </div>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-foreground text-sm font-medium" for="wo-tecnico"
+            >Técnico asignado</label
+          >
+          <hlm-select [itemToString]="tecnicoToString" class="w-full">
+            <hlm-select-trigger id="wo-tecnico">
+              <hlm-select-value placeholder="Seleccionar técnico..." />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (tech of tecnicoOptions.slice(1); track tech.value) {
+                  <hlm-select-item [value]="tech.value">{{ tech.label }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-foreground text-sm font-medium" for="wo-descripcion"
+            >Descripción</label
+          >
+          <textarea
+            hlmInput
+            id="wo-descripcion"
+            rows="3"
+            placeholder="Describe el trabajo a realizar..."
+          ></textarea>
+        </div>
+      </div>
+
+      <hlm-dialog-footer>
+        <button hlmBtn variant="outline" hlmDialogClose>Cancelar</button>
+        <button hlmBtn hlmDialogClose>Crear orden</button>
+      </hlm-dialog-footer>
+    </hlm-dialog-content>
+  </hlm-dialog>
+</ng-template>

@@ -1,0 +1,31 @@
+<svg
+  [attr.viewBox]="'0 0 ' + (bars().length * 50) + ' ' + height()"
+  [attr.aria-label]="ariaLabel() || 'Gráfico de barras'"
+  role="img"
+  class="h-auto w-full"
+  preserveAspectRatio="xMidYMid meet"
+>
+  @for (bar of bars(); track bar.label; let i = $index) {
+    <rect
+      [attr.x]="i * 50 + 8"
+      [attr.y]="height() - (bar.heightPercent / 100) * (height() - 30)"
+      [attr.width]="34"
+      [attr.height]="(bar.heightPercent / 100) * (height() - 30)"
+      rx="4"
+      class="fill-primary"
+      opacity="0.85"
+    />
+    <text
+      [attr.x]="i * 50 + 25"
+      [attr.y]="height() - (bar.heightPercent / 100) * (height() - 30) - 6"
+      text-anchor="middle"
+      class="fill-foreground text-[10px] font-medium"
+    >{{ bar.value }}</text>
+    <text
+      [attr.x]="i * 50 + 25"
+      [attr.y]="height() - 4"
+      text-anchor="middle"
+      class="fill-muted-foreground text-[9px]"
+    >{{ bar.label }}</text>
+  }
+</svg>

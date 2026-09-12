@@ -1,0 +1,187 @@
+<div class="flex min-h-dvh flex-col bg-background lg:flex-row">
+  <!-- Brand panel -->
+  <div
+    class="relative flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-[oklch(0.45_0.05_250)] to-[oklch(0.35_0.08_250)] px-8 py-16 text-white lg:px-16"
+  >
+    <div class="flex flex-col items-center gap-6 text-center">
+      <div class="flex items-center gap-3 text-4xl font-bold tracking-tight">
+        <ng-icon name="lucideWrench" class="text-[oklch(0.78_0.15_75)]" />
+        <span>Mantia</span>
+      </div>
+      <p class="max-w-sm text-lg font-light leading-relaxed text-white/80">
+        Gestión de mantenimiento predictivo. Controla órdenes de trabajo, inventario y
+        disponibilidad de activos desde un solo lugar.
+      </p>
+      <ul class="mt-4 flex flex-col gap-3 text-sm text-white/70">
+        <li class="flex items-center gap-2">
+          <ng-icon name="lucideCircleCheck" class="text-[oklch(0.78_0.15_75)]" />
+          Órdenes de trabajo en tiempo real
+        </li>
+        <li class="flex items-center gap-2">
+          <ng-icon name="lucideCircleCheck" class="text-[oklch(0.78_0.15_75)]" />
+          Inventario y repuestos
+        </li>
+        <li class="flex items-center gap-2">
+          <ng-icon name="lucideCircleCheck" class="text-[oklch(0.78_0.15_75)]" />
+          Reportes y métricas
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Form card -->
+  <div class="flex flex-1 items-center justify-center px-6 py-12 lg:px-16">
+    <div class="w-full max-w-md">
+      <hlm-card>
+        <hlm-card-header>
+          <h3 hlmCardTitle class="text-xl">Iniciar sesión</h3>
+          <p hlmCardDescription>Ingresa tus credenciales para continuar</p>
+        </hlm-card-header>
+
+        <div hlmCardContent>
+          @if (loginError()) {
+            <div
+              class="mb-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
+              <ng-icon name="lucideTriangleAlert" />
+              Credenciales incorrectas. Intenta con la cuenta demo.
+            </div>
+          }
+
+          <form (submit)="onSubmit(); $event.preventDefault()">
+            <div class="flex flex-col gap-5">
+              <!-- Email -->
+              <div hlmField>
+                <label hlmFieldLabel for="login-email">Correo electrónico</label>
+                <div class="relative">
+                  <ng-icon
+                    name="lucideMail"
+                    class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <input
+                    hlmInput
+                    id="login-email"
+                    type="email"
+                    placeholder="demo&#64;mantia.app"
+                    [formField]="loginForm.email"
+                    class="pl-9"
+                  />
+                </div>
+                @for (error of loginForm.email().errors(); track error.kind) {
+                  <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+                }
+              </div>
+
+              <!-- Password -->
+              <div hlmField>
+                <div class="flex items-center justify-between">
+                  <label hlmFieldLabel for="login-password">Contraseña</label>
+                  <a
+                    href="#"
+                    class="text-xs text-primary underline-offset-4 hover:underline"
+                    (click)="$event.preventDefault()"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </a>
+                </div>
+                <div class="relative">
+                  <ng-icon
+                    name="lucideLock"
+                    class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <input
+                    hlmInput
+                    id="login-password"
+                    [type]="showPassword() ? 'text' : 'password'"
+                    placeholder="••••••••"
+                    [formField]="loginForm.password"
+                    class="pl-9 pr-9"
+                  />
+                  <button
+                    type="button"
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    (click)="showPassword.set(!showPassword())"
+                    [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  >
+                    <ng-icon
+                      class="size-4"
+                      [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'"
+                    />
+                  </button>
+                </div>
+                @for (error of loginForm.password().errors(); track error.kind) {
+                  <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+                }
+              </div>
+
+              <!-- Remember me -->
+              <div hlmField orientation="horizontal">
+                <hlm-checkbox
+                  inputId="login-remember"
+                  [checked]="rememberMe()"
+                  (checkedChange)="rememberMe.set($event)"
+                />
+                <label hlmFieldLabel for="login-remember" class="cursor-pointer">Recordarme</label>
+              </div>
+
+              <!-- Submit -->
+              <button hlmBtn type="submit" class="w-full" [disabled]="loading()">
+                @if (loading()) {
+                  <svg
+                    class="size-4 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    />
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Iniciando sesión…
+                } @else {
+                  Iniciar sesión
+                  <ng-icon name="lucideArrowRight" />
+                }
+              </button>
+            </div>
+          </form>
+
+          <!-- Demo hint -->
+          <div
+            class="mt-4 rounded-lg bg-muted/50 px-4 py-3 text-center text-xs text-muted-foreground"
+          >
+            <span class="font-medium">Cuenta demo:</span> demo&#64;mantia.app / mantia
+          </div>
+        </div>
+
+        <hlm-card-footer class="justify-center">
+          <p class="text-sm text-muted-foreground">
+            ¿No tienes cuenta?
+            <a
+              routerLink="/register"
+              class="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Crear cuenta
+            </a>
+          </p>
+        </hlm-card-footer>
+      </hlm-card>
+
+      <div class="mt-6 text-center">
+        <a routerLink="/" class="text-sm text-muted-foreground hover:text-foreground">
+          ← Volver al inicio
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

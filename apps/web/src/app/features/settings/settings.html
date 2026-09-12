@@ -1,0 +1,239 @@
+<app-page-header
+  title="Configuración"
+  subtitle="Preferencias del sistema y parámetros generales"
+  [breadcrumbs]="[
+    { label: 'Inicio', link: '/app/dashboard' },
+    { label: 'Configuración' }
+  ]"
+/>
+
+<div class="mt-6">
+  <hlm-tabs tab="organizacion">
+    <hlm-tabs-list>
+      <button hlmTabsTrigger="organizacion">Organización</button>
+      <button hlmTabsTrigger="notificaciones">Notificaciones</button>
+      <button hlmTabsTrigger="apariencia">Apariencia</button>
+      <button hlmTabsTrigger="integraciones">Integraciones</button>
+    </hlm-tabs-list>
+
+    <div hlmTabsContent="organizacion" class="mt-4">
+      <section hlmCard>
+        <hlm-card-header>
+          <h3 hlmCardTitle>Datos de la organización</h3>
+          <p hlmCardDescription>Información general de la empresa</p>
+        </hlm-card-header>
+        <hlm-separator />
+        <div hlmCardContent>
+          <div class="flex flex-col gap-4">
+            <label class="flex flex-col gap-1.5" hlmLabel>
+              Nombre de la organización
+              <input
+                hlmInput
+                [value]="orgName()"
+                (input)="onOrgNameInput($event)"
+              />
+            </label>
+            <label class="flex flex-col gap-1.5" hlmLabel>
+              Industria
+              <input
+                hlmInput
+                [value]="orgIndustry()"
+                (input)="onOrgIndustryInput($event)"
+              />
+            </label>
+            <label class="flex flex-col gap-1.5" hlmLabel>
+              Zona horaria
+              <input
+                hlmInput
+                [value]="orgTimezone()"
+                (input)="onOrgTimezoneInput($event)"
+              />
+            </label>
+            <div class="flex flex-col gap-1.5">
+              <span hlmLabel>Logo</span>
+              <div class="border-input flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed">
+                <span class="text-muted-foreground text-xs">Logo aquí</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div hlmTabsContent="notificaciones" class="mt-4">
+      <section hlmCard>
+        <hlm-card-header>
+          <h3 hlmCardTitle>Preferencias de notificaciones</h3>
+          <p hlmCardDescription>Configura cómo recibir alertas del sistema</p>
+        </hlm-card-header>
+        <hlm-separator />
+        <div hlmCardContent>
+          <div class="flex flex-col gap-5">
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-foreground text-sm font-medium">Email — Órdenes de trabajo</span>
+                <span class="text-muted-foreground text-xs">Recibir notificaciones por email cuando se creen o actualicen OTs</span>
+              </div>
+              <hlm-switch
+                [checked]="notifEmailOT()"
+                (checkedChange)="notifEmailOT.set($event)"
+              />
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-foreground text-sm font-medium">Email — Alertas de stock</span>
+                <span class="text-muted-foreground text-xs">Notificación por email cuando una pieza esté por debajo del mínimo</span>
+              </div>
+              <hlm-switch
+                [checked]="notifEmailStock()"
+                (checkedChange)="notifEmailStock.set($event)"
+              />
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-foreground text-sm font-medium">Alertas in-app — Órdenes de trabajo</span>
+                <span class="text-muted-foreground text-xs">Mostrar alertas en el panel de notificaciones</span>
+              </div>
+              <hlm-switch
+                [checked]="notifAlertOT()"
+                (checkedChange)="notifAlertOT.set($event)"
+              />
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-foreground text-sm font-medium">Alertas in-app — Stock</span>
+                <span class="text-muted-foreground text-xs">Avisos de inventario bajo en la aplicación</span>
+              </div>
+              <hlm-switch
+                [checked]="notifAlertStock()"
+                (checkedChange)="notifAlertStock.set($event)"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div hlmTabsContent="apariencia" class="mt-4">
+      <section hlmCard>
+        <hlm-card-header>
+          <h3 hlmCardTitle>Apariencia</h3>
+          <p hlmCardDescription>Personaliza la visualización del sistema</p>
+        </hlm-card-header>
+        <hlm-separator />
+        <div hlmCardContent>
+          <div class="flex flex-col gap-6">
+            <div class="flex flex-col gap-2">
+              <span class="text-foreground text-sm font-medium">Tema</span>
+              <div class="flex gap-2">
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  [class]="theme() === 'light' ? 'bg-primary text-primary-foreground' : ''"
+                  (click)="toggleTheme('light')"
+                >
+                  <ng-icon name="lucideSun" class="size-4" />
+                  Claro
+                </button>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  [class]="theme() === 'dark' ? 'bg-primary text-primary-foreground' : ''"
+                  (click)="toggleTheme('dark')"
+                >
+                  <ng-icon name="lucideMoon" class="size-4" />
+                  Oscuro
+                </button>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  [class]="theme() === 'system' ? 'bg-primary text-primary-foreground' : ''"
+                  (click)="toggleTheme('system')"
+                >
+                  <ng-icon name="lucideSettings" class="size-4" />
+                  Sistema
+                </button>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <span class="text-foreground text-sm font-medium">Densidad</span>
+              <div class="flex gap-2">
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  [class]="density() === 'compact' ? 'bg-primary text-primary-foreground' : ''"
+                  (click)="toggleDensity('compact')"
+                >
+                  Compacta
+                </button>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  [class]="density() === 'default' ? 'bg-primary text-primary-foreground' : ''"
+                  (click)="toggleDensity('default')"
+                >
+                  Predeterminada
+                </button>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  [class]="density() === 'comfortable' ? 'bg-primary text-primary-foreground' : ''"
+                  (click)="toggleDensity('comfortable')"
+                >
+                  Cómoda
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div hlmTabsContent="integraciones" class="mt-4">
+      <section hlmCard>
+        <hlm-card-header>
+          <h3 hlmCardTitle>Integraciones</h3>
+          <p hlmCardDescription>Conecta Mantia con sistemas externos</p>
+        </hlm-card-header>
+        <hlm-separator />
+        <div hlmCardContent>
+          <div class="flex flex-col gap-4">
+            @for (integration of integrations(); track integration.name) {
+              <div class="flex items-center justify-between rounded-lg border p-4">
+                <div class="flex items-center gap-3">
+                  <ng-icon [name]="integration.icon" class="text-muted-foreground size-5" />
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-foreground text-sm font-medium">{{ integration.name }}</span>
+                    <span class="text-muted-foreground text-xs">
+                      {{ integration.connected ? 'Conectado' : 'No conectado' }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                >
+                  {{ integration.connected ? 'Desconectar' : 'Conectar' }}
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+    </div>
+  </hlm-tabs>
+</div>
+
+<div class="mt-6 flex justify-end">
+  <button hlmBtn (click)="save()">
+    <ng-icon name="lucideCheck" class="size-4" />
+    Guardar cambios
+  </button>
+</div>

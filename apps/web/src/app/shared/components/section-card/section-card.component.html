@@ -1,0 +1,19 @@
+<section hlmCard>
+  <hlm-card-header>
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex flex-col gap-1">
+        <h3 hlmCardTitle>{{ title() }}</h3>
+        @if (description(); as desc) {
+          <p hlmCardDescription>{{ desc }}</p>
+        }
+      </div>
+      <div class="flex shrink-0 items-center gap-2">
+        <ng-content select="[actions]" />
+      </div>
+    </div>
+  </hlm-card-header>
+  <hlm-separator />
+  <div hlmCardContent>
+    <ng-content select="[body]" />
+  </div>
+</section>
