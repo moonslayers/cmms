@@ -39,11 +39,13 @@ module.exports = defineConfig([
     rules: {},
   },
   {
-    // Generated Helm components follow spartan's own `hlm-`/`brn-` selector conventions.
+    // Generated Helm components follow spartan's own `hlm-`/`brn-` selector conventions
+    // and intentionally alias inputs (class, style, checked, etc.) for standard Angular bindings.
     files: ['libs/ui/**/*.ts'],
     rules: {
       '@angular-eslint/directive-selector': 'off',
       '@angular-eslint/component-selector': 'off',
+      '@angular-eslint/no-input-rename': 'off',
     },
   },
 ]);
